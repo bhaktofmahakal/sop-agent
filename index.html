@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOP → AI Training System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F2EB;
+    --bg2: #EDEAE0;
+    --surface: #FDFCF9;
+    --border: #D8D3C8;
+    --border2: #C8C3B5;
+    --text: #1A1814;
+    --text2: #6B6660;
+    --text3: #9B9690;
+    --accent: #2D5016;
+    --accent-light: #EAF0E2;
+    --accent2: #8B4513;
+    --accent2-light: #F5EDE5;
+    --blue: #1B3A6B;
+    --blue-light: #E5EBF5;
+    --amber: #92600A;
+    --amber-light: #FBF3E3;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .nav-badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 20px;
+    border: 1px solid #C5D9A8;
+    letter-spacing: 0.04em;
+  }
+  .nav-badge.bonus {
+    background: var(--amber-light);
+    border-color: #E8C36B;
+    color: var(--amber);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+    align-items: start;
+  }
+  .hero-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px;
+    line-height: 1.1;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  .hero-left h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-left p {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+    max-width: 340px;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    text-align: center;
+    flex: 1;
+  }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── PIPELINE VISUAL ── */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+  .pipeline-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+  .pipeline-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .p-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+  .p-step-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 6px;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .p-step-icon.active { background: var(--accent-light); border-color: #C5D9A8; }
+  .p-step-text { font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace; }
+  .p-arrow {
+    color: var(--border2);
+    font-size: 18px;
+    padding: 0 4px;
+    margin-bottom: 20px;
+  }
+
+  /* ── INPUT CARD ── */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .input-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .input-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--text);
+  }
+  .input-meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  textarea::placeholder { color: var(--text3); }
+  .api-key-wrap {
+    margin-top: 0;
+  }
+  .provider-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 12px;
+    margin-top: 14px;
+    align-items: start;
+  }
+  .provider-select-wrap,
+  .api-key-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .provider-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .provider-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0 14px;
+    height: 56px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .provider-select:focus { outline: none; border-color: var(--accent); }
+  .api-key-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+  .api-key-input:focus { outline: none; border-color: var(--accent); }
+  .api-key-input::placeholder { color: var(--text3); }
+  .api-key-note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .samples-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .samples-label {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--text2);
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-process {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-process:hover { opacity: 0.88; }
+  .btn-process:active { transform: scale(0.98); }
+  .btn-process:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-sec {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sec:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── LOADING ── */
+  .loader {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--accent-light);
+    border: 1px solid #C5D9A8;
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 20px;
+  }
+  .loader.visible { display: flex; }
+  .loader-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── OUTPUT ── */
+  #output { display: none; }
+  #output.visible { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .output-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+  }
+  .output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn-export:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-count {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── SUMMARY PANEL ── */
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-box::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--accent);
+    border-radius: 4px 0 0 4px;
+  }
+  .summary-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .summary-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.8;
+  }
+  .key-points {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .kp {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .kp-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .kp-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── STEPS PANEL ── */
+  .steps-list { display: flex; flex-direction: column; gap: 12px; }
+  .step-item {
+    display: flex;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .step-item:hover { border-color: var(--border2); }
+  .step-num {
+    min-width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    border: 1px solid #C5D9A8;
+  }
+  .step-body {}
+  .step-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .step-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .step-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .tag-support { background: var(--blue-light); color: var(--blue); }
+  .tag-csm { background: var(--accent-light); color: var(--accent); }
+  .tag-check { background: var(--amber-light); color: var(--amber); }
+
+  /* ── QUIZ PANEL ── */
+  .quiz-list { display: flex; flex-direction: column; gap: 14px; }
+  .quiz-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .quiz-q-row {
+    padding: 16px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    cursor: pointer;
+    user-select: none;
+  }
+  .quiz-q-row:hover { background: var(--bg); }
+  .quiz-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text3);
+    min-width: 22px;
+    margin-top: 1px;
+  }
+  .quiz-q-text { font-size: 14px; color: var(--text); font-weight: 400; flex: 1; line-height: 1.6; }
+  .quiz-toggle { color: var(--text3); font-size: 18px; margin-top: -2px; transition: transform 0.2s; }
+  .quiz-toggle.open { transform: rotate(45deg); }
+  .quiz-answer {
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.2s;
+  }
+  .quiz-answer.open {
+    max-height: 200px;
+    padding: 0 18px 14px;
+  }
+  .quiz-answer-inner {
+    padding: 12px 14px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+  .quiz-diff {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .diff-easy { background: var(--accent-light); color: var(--accent); }
+  .diff-medium { background: var(--amber-light); color: var(--amber); }
+  .diff-hard { background: #F5EDE5; color: var(--accent2); }
+
+  /* ── SLIDES PANEL ── */
+  .slides-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .slides-print-deck { display: none; }
+  .slide-counter {
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+  }
+  .btn-slide {
+    width: 32px; height: 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    color: var(--text2);
+  }
+  .btn-slide:hover { border-color: var(--border2); color: var(--text); }
+  .btn-slide:disabled { opacity: 0.3; cursor: not-allowed; }
+  .slide-viewer {
+    background:
+      radial-gradient(circle at top right, rgba(139, 69, 19, 0.08), transparent 28%),
+      linear-gradient(180deg, #FFFDF8 0%, #F7F3EA 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+  }
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 34px 38px 46px;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .slide.active { display: flex; }
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 22px;
+    border: 1px solid rgba(45, 80, 22, 0.08);
+    border-radius: 18px;
+    pointer-events: none;
+  }
+  .slide-type {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 14px;
+    color: var(--text3);
+  }
+  .slide-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .slide-body {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.75;
+    max-width: 62ch;
+  }
+  .slide-num-badge {
+    position: absolute;
+    bottom: 16px; right: 20px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text3);
+    background: rgba(253, 252, 249, 0.88);
+    border: 1px solid rgba(216, 211, 200, 0.9);
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+  .slide-accent { color: var(--accent); }
+  .slide-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(234, 240, 226, 0.9);
+    color: var(--accent);
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .slide-shell {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .slide-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 8px;
+    max-width: 100%;
+  }
+  .slide-list li {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text2);
+    padding: 12px 14px;
+    background: rgba(253, 252, 249, 0.84);
+    border: 1px solid rgba(216, 211, 200, 0.9);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(26, 24, 20, 0.04);
+  }
+  .slide-list li::before {
+    content: attr(data-step);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .slide-cover {
+    background:
+      radial-gradient(circle at top left, rgba(245, 243, 227, 0.12), transparent 32%),
+      linear-gradient(135deg, #16140F 0%, #1B2430 56%, #2D5016 100%);
+  }
+  .slide-cover::before { border-color: rgba(255,255,255,0.08); }
+  .slide-cover .slide-kicker {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.82);
+  }
+  .slide-cover .slide-type { color: rgba(255,255,255,0.55); }
+  .slide-cover .slide-title { color: #fff; font-size: 38px; max-width: 10ch; }
+  .slide-cover .slide-body { color: rgba(255,255,255,0.72); max-width: 42ch; }
+  .slide-cover .slide-num-badge {
+    background: rgba(22, 20, 15, 0.45);
+    border-color: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75);
+  }
+  .slide-overview .slide-list,
+  .slide-assessment .slide-list {
+    grid-template-columns: 1fr 1fr;
+  }
+  .slide-roles .slide-list {
+    grid-template-columns: 1fr 1fr;
+  }
+  .slide-process .slide-list li::before {
+    background: var(--blue-light);
+    color: var(--blue);
+  }
+  .slide-assessment .slide-list li::before {
+    background: var(--amber-light);
+    color: var(--amber);
+  }
+  .slide-roles .slide-list li::before {
+    background: var(--accent2-light);
+    color: var(--accent2);
+  }
+
+  /* ── N8N PANEL ── */
+  .n8n-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+  }
+  .n8n-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .n8n-desc { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+  .workflow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .wf-node {
+    flex-shrink: 0;
+    width: 140px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .wf-node.trigger { border-color: #C5D9A8; background: var(--accent-light); }
+  .wf-node.ai { border-color: #B5D4F4; background: var(--blue-light); }
+  .wf-node.output { border-color: #FAC775; background: var(--amber-light); }
+  .wf-icon { font-size: 22px; margin-bottom: 8px; }
+  .wf-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .wf-desc { font-size: 11px; color: var(--text2); line-height: 1.4; }
+  .wf-arrow {
+    align-self: center;
+    color: var(--border2);
+    font-size: 20px;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .wf-steps {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .wf-step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .wf-step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    min-width: 18px;
+  }
+  .wf-step-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* ── ERROR ── */
+  .error-box {
+    display: none;
+    padding: 12px 16px;
+    background: #FFECEC;
+    border: 1px solid #FFBDBD;
+    border-radius: var(--radius);
+    color: #991B1B;
+    font-size: 13px;
+    margin-bottom: 16px;
+    font-family: 'DM Mono', monospace;
+  }
+  .error-box.visible { display: block; }
+
+  @media (max-width: 680px) {
+    .hero { grid-template-columns: 1fr; gap: 20px; }
+    .key-points { grid-template-columns: 1fr; }
+    .wf-steps { grid-template-columns: 1fr; }
+    .provider-row { grid-template-columns: 1fr; }
+    .slide-overview .slide-list,
+    .slide-assessment .slide-list,
+    .slide-roles .slide-list { grid-template-columns: 1fr; }
+  }
+
+  @media print {
+    body.print-slides .shell > * { display: none !important; }
+    body.print-slides #output,
+    body.print-slides #panel-slides,
+    body.print-slides .slides-print-deck { display: block !important; }
+    body.print-slides #output {
+      padding: 0;
+      margin: 0;
+    }
+    body.print-slides .output-header,
+    body.print-slides .tabs,
+    body.print-slides .slides-nav,
+    body.print-slides .slide-viewer { display: none !important; }
+    body.print-slides .slides-print-deck .slide {
+      display: flex !important;
+      min-height: 100vh;
+      page-break-after: always;
+      break-after: page;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+    }
+    body.print-slides .slides-print-deck .slide:last-child {
+      page-break-after: auto;
+      break-after: auto;
+      margin-bottom: 0;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">SOP<span>→</span>Train</div>
+    <div class="nav-actions">
+      <span class="nav-badge bonus">✓ Bonus: Slides + Automation + Live Demo</span>
+      <span class="nav-badge" id="provider-badge">MULTI-PROVIDER AI READY</span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <h1>Turn any SOP into <em>structured training</em> instantly.</h1>
+      <p>Paste a Standard Operating Procedure. Your selected AI provider generates a summary, step-by-step training content, evaluation questions, presentation slides, and an automation workflow.</p>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">3</span><span class="stat-label">outputs</span></div>
+        <div class="stat"><span class="stat-num">5</span><span class="stat-label">slides</span></div>
+        <div class="stat"><span class="stat-num">~5s</span><span class="stat-label">to generate</span></div>
+      </div>
+    </div>
+    <div class="pipeline">
+      <div class="pipeline-label">automation pipeline</div>
+      <div class="pipeline-steps">
+        <div class="p-step">
+          <div class="p-step-icon active">📄</div>
+          <div class="p-step-text">SOP input</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step">
+          <div class="p-step-icon active">🤖</div>
+          <div class="p-step-text">AI API</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step">
+          <div class="p-step-icon">📋</div>
+          <div class="p-step-text">Summary</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step">
+          <div class="p-step-icon">🪜</div>
+          <div class="p-step-text">Steps</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step">
+          <div class="p-step-icon">❓</div>
+          <div class="p-step-text">Quiz</div>
+        </div>
+        <div class="p-arrow">→</div>
+        <div class="p-step">
+          <div class="p-step-icon">🎞</div>
+          <div class="p-step-text">Slides</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-card">
+    <div class="input-header">
+      <div class="input-title">SOP Document</div>
+      <div class="input-meta">text / paste</div>
+    </div>
+    <textarea id="sop-input" placeholder="Paste your SOP document here...&#10;&#10;Example: Customer Onboarding SOP, Safety Evacuation Protocol, Refund Policy..."></textarea>
+    <div class="provider-row">
+      <div class="provider-select-wrap">
+        <div class="provider-label">AI Provider</div>
+        <select id="provider-select" class="provider-select" onchange="updateProviderUI()">
+          <option value="groq">Groq</option>
+          <option value="anthropic">Claude</option>
+          <option value="openai">GPT</option>
+        </select>
+      </div>
+      <div class="api-key-wrap">
+        <div class="provider-label">API Key</div>
+        <input
+          id="api-key"
+          class="api-key-input"
+          type="password"
+          autocomplete="off"
+          placeholder="Enter Groq API key (free at console.groq.com)"
+        >
+        <div class="api-key-note" id="api-key-note">Get free API key at console.groq.com</div>
+      </div>
+    </div>
+    <div class="samples-row">
+      <span class="samples-label">load sample →</span>
+      <div class="chip" onclick="loadSample('onboarding')">Customer Onboarding</div>
+      <div class="chip" onclick="loadSample('refund')">Refund Policy</div>
+      <div class="chip" onclick="loadSample('safety')">Safety Protocol</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-process" id="proc-btn" onclick="processSOP()">
+        <span id="btn-text">▶ Generate Training</span>
+      </button>
+      <button class="btn-sec" onclick="clearAll()">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-dot"></div>
+    <div class="loader-dot"></div>
+    <div class="loader-dot"></div>
+    <span id="loader-msg">Sending SOP to AI provider...</span>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="error-box"></div>
+
+  <!-- OUTPUT -->
+  <div id="output">
+    <div class="output-header">
+      <div class="output-title">Training Output</div>
+      <div class="output-actions">
+        <button class="btn-export" onclick="copyJSON()">⬡ Copy JSON</button>
+        <button class="btn-export" onclick="printOutput()">↗ Print / Save PDF</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('summary',this)">Summary <span class="tab-count" id="tc-summary">1</span></div>
+      <div class="tab" onclick="switchTab('steps',this)">Training Steps <span class="tab-count" id="tc-steps">—</span></div>
+      <div class="tab" onclick="switchTab('quiz',this)">Quiz <span class="tab-count" id="tc-quiz">—</span></div>
+      <div class="tab" onclick="switchTab('slides',this)">Slides <span class="tab-count" id="tc-slides">—</span></div>
+      <div class="tab" onclick="switchTab('n8n',this)">n8n Workflow</div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="tab-panel active" id="panel-summary">
+      <div class="summary-box">
+        <div class="summary-label">structured summary</div>
+        <div class="summary-text" id="summary-text"></div>
+        <div class="key-points" id="key-points"></div>
+      </div>
+    </div>
+
+    <!-- STEPS -->
+    <div class="tab-panel" id="panel-steps">
+      <div class="steps-list" id="steps-list"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="tab-panel" id="panel-quiz">
+      <div class="quiz-list" id="quiz-list"></div>
+    </div>
+
+    <!-- SLIDES -->
+    <div class="tab-panel" id="panel-slides">
+      <div class="slides-nav">
+        <button class="btn-slide" id="slide-prev" onclick="prevSlide()">‹</button>
+        <span class="slide-counter" id="slide-counter">1 / 5</span>
+        <button class="btn-export" onclick="downloadSlidesPDF()">Download Slides as PDF</button>
+        <button class="btn-slide" id="slide-next" onclick="nextSlide()">›</button>
+      </div>
+      <div class="slide-viewer" id="slide-viewer"></div>
+      <div class="slides-print-deck" id="slides-print-deck"></div>
+    </div>
+
+    <!-- N8N -->
+    <div class="tab-panel" id="panel-n8n">
+      <div class="n8n-wrapper">
+        <div class="output-header">
+          <div class="n8n-title">n8n Automation Workflow</div>
+          <button class="btn-export" onclick="copyN8nJSON()">Copy Import-Ready n8n JSON</button>
+        </div>
+        <div class="n8n-desc">This workflow automates the full SOP → Training pipeline and copies as import-ready n8n JSON. It is configured around PDF SOP files with Google Drive download, official Extract From File parsing, provider-aware HTTP request settings, Notion handoff, and Gmail notification.</div>
+        <div class="workflow">
+          <div class="wf-node trigger">
+            <div class="wf-icon">📁</div>
+            <div class="wf-name">Drive Trigger</div>
+            <div class="wf-desc">Trigger on new file in /SOPs folder</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node trigger">
+            <div class="wf-icon">📄</div>
+            <div class="wf-name">Download File</div>
+            <div class="wf-desc">Fetch binary PDF from Google Drive</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node trigger">
+            <div class="wf-icon">🧾</div>
+            <div class="wf-name">Extract From File</div>
+            <div class="wf-desc">Convert PDF binary into clean text/JSON</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node ai">
+            <div class="wf-icon">🤖</div>
+            <div class="wf-name">AI API</div>
+            <div class="wf-desc">HTTP node → provider endpoint with structured prompt</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node ai">
+            <div class="wf-icon">⚙️</div>
+            <div class="wf-name">Parse JSON</div>
+            <div class="wf-desc">Extract summary, steps, quiz from response</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node output">
+            <div class="wf-icon">📝</div>
+            <div class="wf-name">Notion Page</div>
+            <div class="wf-desc">Create structured training doc in Notion DB</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-node output">
+            <div class="wf-icon">✉️</div>
+            <div class="wf-name">Send Email</div>
+            <div class="wf-desc">Notify team with training link + quiz PDF</div>
+          </div>
+        </div>
+        <div class="wf-steps">
+          <div class="wf-step"><span class="wf-step-num">01</span><span class="wf-step-text">Google Drive Trigger watches the configured SOP folder for a newly added PDF</span></div>
+          <div class="wf-step"><span class="wf-step-num">02</span><span class="wf-step-text">Google Drive download node fetches the uploaded file as binary data</span></div>
+          <div class="wf-step"><span class="wf-step-num">03</span><span class="wf-step-text">Extract From File node converts the PDF into readable text for the prompt</span></div>
+          <div class="wf-step"><span class="wf-step-num">04</span><span class="wf-step-text">Selected AI API is called through an HTTP Request node using provider-specific headers and OpenAI/Anthropic-compatible body format</span></div>
+          <div class="wf-step"><span class="wf-step-num">05</span><span class="wf-step-text">Code node parses the model response into summary, key points, steps, quiz, and slides JSON</span></div>
+          <div class="wf-step"><span class="wf-step-num">06</span><span class="wf-step-text">Notion and Gmail nodes fan out the final training pack to your knowledge base and notification inbox</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SAMPLES = {
+  onboarding: `Customer Onboarding SOP — Version 2.1\n\nObjective: Ensure all new customers are onboarded within 48 hours of account creation with full product access and initial support contact.\n\nSteps:\n1. Send welcome email with login credentials within 1 hour of signup.\n2. Assign a dedicated Customer Success Manager (CSM) within 4 hours.\n3. CSM schedules a 30-minute kickoff call within 24 hours.\n4. During kickoff call, CSM walks the customer through the dashboard, key features, and sets up first workflow.\n5. Share onboarding documentation and video library link via email post-call.\n6. At 72 hours, CSM checks in via email to address any blockers.\n7. At 7 days, send NPS survey and schedule a 15-minute review call if score < 8.\n\nResponsibilities:\n- Support team: email delivery, account creation\n- CSM team: all customer-facing steps\n\nSuccess Criteria: Customer logs in at least once, completes setup wizard, and responds to first check-in.`,
+  refund: `Refund & Return Policy SOP — Retail Operations\n\nScope: All customer-facing retail and e-commerce orders.\n\nPolicy:\n- Refunds accepted within 30 days of purchase with valid receipt.\n- Items must be unused and in original packaging.\n- Digital products are non-refundable after download.\n\nRefund Process:\n1. Customer submits refund request via support portal or in-store.\n2. Support agent verifies purchase date and item condition.\n3. If eligible, initiate refund in payment system within 2 business days.\n4. Notify customer via email with refund confirmation and timeline.\n5. For in-store returns, issue store credit or card refund immediately.\n6. Log all refund cases in CRM with reason code.\n\nExceptions: Sale items — store credit only. Damaged by customer — not eligible.\nEscalation: Any refund above ₹5000 requires manager approval.`,
+  safety: `Workplace Safety SOP — Emergency Evacuation\n\nPurpose: Safe and orderly evacuation of all personnel during emergencies.\n\nTriggers: Fire alarm, gas leak, bomb threat, structural emergency.\n\nRoles: Floor Wardens lead evacuation. Safety Officer coordinates with emergency services. Reception accounts for visitors.\n\nEvacuation Steps:\n1. On alarm activation, immediately stop all work.\n2. Leave personal belongings. Take only keys and access cards.\n3. Use designated stairwells — do not use elevators.\n4. Assist anyone with mobility issues to nearest refuge area.\n5. Proceed to assembly point — main parking lot for HQ.\n6. Floor Warden takes headcount and reports to Safety Officer.\n7. Do not re-enter until All Clear is given by Safety Officer.\n\nSpecial Instructions:\n- Server room staff must power down critical systems before evacuating.\n- Do not use mobile phones in stairwells.\n- Visitors must be escorted by their host.`
+};
+
+const PROVIDERS = {
+  groq: {
+    id: 'groq',
+    label: 'Groq',
+    badge: 'GROQ',
+    note: 'Get free API key at console.groq.com',
+    placeholder: 'Enter Groq API key (free at console.groq.com)',
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    model: 'llama-3.3-70b-versatile',
+    buildRequest(prompt, apiKey) {
+      return {
+        url: this.endpoint,
+        options: {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 2000,
+            temperature: 0.7
+          })
+        }
+      };
+    },
+    parseResponse(data) {
+      return data?.choices?.[0]?.message?.content;
+    }
+  },
+  anthropic: {
+    id: 'anthropic',
+    label: 'Claude',
+    badge: 'CLAUDE',
+    note: 'Enter your Anthropic API key from console.anthropic.com',
+    placeholder: 'Enter Anthropic API key',
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    model: 'claude-sonnet-4-20250514',
+    buildRequest(prompt, apiKey) {
+      return {
+        url: this.endpoint,
+        options: {
+          method: 'POST',
+          headers: {
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: this.model,
+            max_tokens: 2000,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        }
+      };
+    },
+    parseResponse(data) {
+      return (data?.content || [])
+        .filter(block => block?.type === 'text')
+        .map(block => block.text || '')
+        .join('')
+        .trim();
+    }
+  },
+  openai: {
+    id: 'openai',
+    label: 'GPT',
+    badge: 'GPT',
+    note: 'Enter your OpenAI API key from platform.openai.com',
+    placeholder: 'Enter OpenAI API key',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o-mini',
+    buildRequest(prompt, apiKey) {
+      return {
+        url: this.endpoint,
+        options: {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 2000,
+            temperature: 0.7
+          })
+        }
+      };
+    },
+    parseResponse(data) {
+      return data?.choices?.[0]?.message?.content;
+    }
+  }
+};
+
+let currentData = null;
+let currentSlide = 0;
+let slides = [];
+
+function extractJsonPayload(text) {
+  const trimmed = (text || '').trim();
+  if (!trimmed) {
+    throw new Error('Empty response received from the selected provider.');
+  }
+
+  const withoutFence = trimmed
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  const start = withoutFence.indexOf('{');
+  const end = withoutFence.lastIndexOf('}');
+
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error('Selected provider did not return valid JSON content.');
+  }
+
+  return withoutFence.slice(start, end + 1);
+}
+
+function getSelectedProvider() {
+  const providerId = document.getElementById('provider-select').value;
+  return PROVIDERS[providerId] || PROVIDERS.groq;
+}
+
+function updateProviderUI() {
+  const provider = getSelectedProvider();
+  const apiKeyInput = document.getElementById('api-key');
+  const apiKeyNote = document.getElementById('api-key-note');
+  const loaderMsg = document.getElementById('loader-msg');
+
+  apiKeyInput.placeholder = provider.placeholder;
+  apiKeyNote.textContent = provider.note;
+  loaderMsg.textContent = `Sending SOP to ${provider.label} API...`;
+}
+
+function buildN8nWorkflowLegacy(provider) {
+  const aiNodeName = `${provider.label} API`;
+  const aiHeaders = provider.id === 'anthropic'
+    ? [
+        { name: 'x-api-key', value: '={{$env.AI_API_KEY}}' },
+        { name: 'anthropic-version', value: '2023-06-01' },
+        { name: 'content-type', value: 'application/json' }
+      ]
+    : [
+        { name: 'Authorization', value: '=Bearer {{$env.AI_API_KEY}}' },
+        { name: 'Content-Type', value: 'application/json' }
+      ];
+
+  const aiBody = provider.id === 'anthropic'
+    ? {
+        contentType: 'json',
+        content: {
+          model: provider.model,
+          max_tokens: 2000,
+          messages: [
+            {
+              role: 'user',
+              content: '={{$json.prompt}}'
+            }
+          ]
+        }
+      }
+    : {
+        contentType: 'json',
+        content: {
+          model: provider.model,
+          messages: [
+            {
+              role: 'user',
+              content: '={{$json.prompt}}'
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7
+        }
+      };
+
+  return {
+    name: `SOP to ${provider.label} Training Pipeline`,
+    active: false,
+    nodes: [
+      {
+        parameters: {
+          event: 'fileCreated',
+          driveToWatch: '={{$env.GOOGLE_DRIVE_ID}}',
+          folderToWatch: '={{$env.SOP_FOLDER_ID}}'
+        },
+        id: 'drive_trigger',
+        name: 'Google Drive Trigger',
+        type: 'n8n-nodes-base.googleDriveTrigger',
+        typeVersion: 1,
+        position: [-780, 120]
+      },
+      {
+        parameters: {
+          operation: 'download',
+          fileId: '={{$json.id}}'
+        },
+        id: 'download_file',
+        name: 'Download SOP File',
+        type: 'n8n-nodes-base.googleDrive',
+        typeVersion: 3,
+        position: [-520, 120]
+      },
+      {
+        parameters: {
+          operation: 'pdf',
+          options: {}
+        },
+        id: 'extract_from_file',
+        name: 'Extract From File',
+        type: 'n8n-nodes-base.extractFromFile',
+        typeVersion: 1,
+        position: [-250, 120]
+      },
+      {
+        parameters: {
+          mode: 'runOnceForAllItems',
+          jsCode: `const source = $input.item.binary?.data?.data || '';\nconst fallbackText = $json.description || $json.name || '';\nconst sopText = fallbackText || 'Paste extracted SOP text here';\nconst prompt = \`You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.\\n\\nSOP:\\n---\\n\${sopText}\\n---\\n\\nRespond ONLY with a valid JSON object — no markdown fences, no preamble, pure JSON:\\n{\\n  "title": "Short title of this SOP (max 6 words)",\\n  "summary": "3-4 sentence structured summary covering objective, scope, key rules, and success criteria.",\\n  "key_points": [\\n    {"label": "Objective", "text": "one sentence"},\\n    {"label": "Scope", "text": "one sentence"},\\n    {"label": "Owner", "text": "team or role responsible"},\\n    {"label": "Timeline", "text": "key time constraints"}\\n  ],\\n  "steps": [\\n    {"num": 1, "title": "Short action title", "desc": "Detailed trainer explanation of this step.", "owner": "Support|CSM|Manager|All"}\\n  ],\\n  "quiz": [\\n    {"q": "Question text?", "a": "Expected answer.", "difficulty": "easy|medium|hard"}\\n  ],\\n  "slides": [\\n    {"type": "cover", "heading": "SOP Title", "body": "Subtitle or tagline"},\\n    {"type": "overview", "heading": "Overview", "bullets": ["point 1", "point 2", "point 3"]},\\n    {"type": "process", "heading": "Key Process Steps", "bullets": ["step summary 1", "step summary 2", "step summary 3", "step summary 4"]},\\n    {"type": "roles", "heading": "Roles & Responsibilities", "bullets": ["role 1: responsibility", "role 2: responsibility"]},\\n    {"type": "assessment", "heading": "Key Takeaways", "bullets": ["takeaway 1", "takeaway 2", "takeaway 3"]}\\n  ]\\n}\\n\\nRequirements:\\n- steps: 5-8 steps\\n- quiz: exactly 5 questions\\n- slides: exactly 5 slides\\n- key_points: exactly 4 items\\n- No extra keys. Valid JSON only.\`;\nreturn [{ json: { sopText, prompt } }];`
+        },
+        id: 'prepare_prompt',
+        name: 'Prepare Prompt',
+        type: 'n8n-nodes-base.code',
+        typeVersion: 2,
+        position: [20, 120]
+      },
+      {
+        parameters: {
+          method: 'POST',
+          url: provider.endpoint,
+          sendHeaders: true,
+          headerParameters: { parameters: aiHeaders },
+          sendBody: true,
+          specifyBody: 'json',
+          jsonBody: aiBody
+        },
+        id: 'ai_http',
+        name: aiNodeName,
+        type: 'n8n-nodes-base.httpRequest',
+        typeVersion: 4.2,
+        position: [20, 120]
+      },
+      {
+        parameters: {
+          mode: 'runOnceForEachItem',
+          jsCode: `const payload = $json;\nconst raw = payload.content\n  ? payload.content.filter(block => block.type === 'text').map(block => block.text || '').join('')\n  : payload.choices?.[0]?.message?.content || '';\nconst clean = raw.replace(/^\\\`\\\`\\\`json\\s*/i, '').replace(/^\\\`\\\`\\\`\\s*/i, '').replace(/\\s*\\\`\\\`\\\`$/i, '').trim();\nconst start = clean.indexOf('{');\nconst end = clean.lastIndexOf('}');\nconst parsed = JSON.parse(clean.slice(start, end + 1));\nreturn [{ json: parsed }];`
+        },
+        id: 'parse_json',
+        name: 'Parse JSON',
+        type: 'n8n-nodes-base.code',
+        typeVersion: 2,
+        position: [300, 120]
+      },
+      {
+        parameters: {
+          resource: 'page',
+          operation: 'create',
+          title: '={{$json.title}}',
+          simple: true
+        },
+        id: 'notion_page',
+        name: 'Notion Page',
+        type: 'n8n-nodes-base.notion',
+        typeVersion: 2.2,
+        position: [580, 20]
+      },
+      {
+        parameters: {
+          resource: 'message',
+          operation: 'send',
+          toList: '={{$env.TRAINING_NOTIFY_EMAIL}}',
+          subject: 'New SOP training pack: {{$json.title}}',
+          emailType: 'text',
+          message: '={{$json.summary}}'
+        },
+        id: 'gmail_notify',
+        name: 'Send Email',
+        type: 'n8n-nodes-base.gmail',
+        typeVersion: 2.1,
+        position: [580, 220]
+      }
+    ],
+    connections: {
+      Google_Drive_Trigger: { main: [[{ node: 'Extract Text', type: 'main', index: 0 }]] },
+      Extract_Text: { main: [[{ node: 'Prepare Prompt', type: 'main', index: 0 }]] },
+      'Prepare Prompt': { main: [[{ node: aiNodeName, type: 'main', index: 0 }]] },
+      [aiNodeName]: { main: [[{ node: 'Parse JSON', type: 'main', index: 0 }]] },
+      'Parse JSON': {
+        main: [[
+          { node: 'Notion Page', type: 'main', index: 0 },
+          { node: 'Send Email', type: 'main', index: 0 }
+        ]]
+      }
+    },
+    pinData: {},
+    settings: { executionOrder: 'v1' },
+    staticData: null,
+    meta: { templateCredsSetupCompleted: false },
+    tags: []
+  };
+}
+
+function buildN8nWorkflow(provider) {
+  const aiNodeName = `${provider.label} API`;
+  const aiHeaders = provider.id === 'anthropic'
+    ? [
+        { name: 'x-api-key', value: '={{$env.AI_API_KEY}}' },
+        { name: 'anthropic-version', value: '2023-06-01' },
+        { name: 'content-type', value: 'application/json' }
+      ]
+    : [
+        { name: 'Authorization', value: '=Bearer {{$env.AI_API_KEY}}' },
+        { name: 'Content-Type', value: 'application/json' }
+      ];
+
+  const aiBody = provider.id === 'anthropic'
+    ? {
+        contentType: 'json',
+        content: {
+          model: provider.model,
+          max_tokens: 2000,
+          messages: [
+            {
+              role: 'user',
+              content: '={{$json.prompt}}'
+            }
+          ]
+        }
+      }
+    : {
+        contentType: 'json',
+        content: {
+          model: provider.model,
+          messages: [
+            {
+              role: 'user',
+              content: '={{$json.prompt}}'
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7
+        }
+      };
+
+  return {
+    name: `SOP to ${provider.label} Training Pipeline`,
+    active: false,
+    nodes: [
+      {
+        parameters: {
+          event: 'fileCreated',
+          driveToWatch: '={{$env.GOOGLE_DRIVE_ID}}',
+          folderToWatch: '={{$env.SOP_FOLDER_ID}}'
+        },
+        id: 'drive_trigger',
+        name: 'Google Drive Trigger',
+        type: 'n8n-nodes-base.googleDriveTrigger',
+        typeVersion: 1,
+        position: [-780, 120]
+      },
+      {
+        parameters: {
+          operation: 'download',
+          fileId: '={{$json.id}}'
+        },
+        id: 'download_file_v2',
+        name: 'Download SOP File',
+        type: 'n8n-nodes-base.googleDrive',
+        typeVersion: 3,
+        position: [-520, 120]
+      },
+      {
+        parameters: {
+          operation: 'pdf',
+          options: {}
+        },
+        id: 'extract_from_file_v2',
+        name: 'Extract From File',
+        type: 'n8n-nodes-base.extractFromFile',
+        typeVersion: 1,
+        position: [-250, 120]
+      },
+      {
+        parameters: {
+          mode: 'runOnceForAllItems',
+          jsCode: `const source = $input.first().json;\nconst textCandidates = [\n  source.text,\n  source.content,\n  source.extractedText,\n  Array.isArray(source.pages) ? source.pages.join('\\n\\n') : '',\n  Array.isArray(source.textAsPages) ? source.textAsPages.join('\\n\\n') : ''\n].filter((value) => typeof value === 'string' && value.trim());\n\nconst sopText = textCandidates[0] || '';\n\nif (!sopText) {\n  throw new Error('No extracted SOP text found. This import-ready workflow is configured for PDF files using the Extract From File node.');\n}\n\nconst prompt = \`You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.\\n\\nSOP:\\n---\\n\${sopText}\\n---\\n\\nRespond ONLY with a valid JSON object - no markdown fences, no preamble, pure JSON:\\n{\\n  "title": "Short title of this SOP (max 6 words)",\\n  "summary": "3-4 sentence structured summary covering objective, scope, key rules, and success criteria.",\\n  "key_points": [\\n    {"label": "Objective", "text": "one sentence"},\\n    {"label": "Scope", "text": "one sentence"},\\n    {"label": "Owner", "text": "team or role responsible"},\\n    {"label": "Timeline", "text": "key time constraints"}\\n  ],\\n  "steps": [\\n    {"num": 1, "title": "Short action title", "desc": "Detailed trainer explanation of this step.", "owner": "Support|CSM|Manager|All"}\\n  ],\\n  "quiz": [\\n    {"q": "Question text?", "a": "Expected answer.", "difficulty": "easy|medium|hard"}\\n  ],\\n  "slides": [\\n    {"type": "cover", "heading": "SOP Title", "body": "Subtitle or tagline"},\\n    {"type": "overview", "heading": "Overview", "bullets": ["point 1", "point 2", "point 3"]},\\n    {"type": "process", "heading": "Key Process Steps", "bullets": ["step summary 1", "step summary 2", "step summary 3", "step summary 4"]},\\n    {"type": "roles", "heading": "Roles & Responsibilities", "bullets": ["role 1: responsibility", "role 2: responsibility"]},\\n    {"type": "assessment", "heading": "Key Takeaways", "bullets": ["takeaway 1", "takeaway 2", "takeaway 3"]}\\n  ]\\n}\\n\\nRequirements:\\n- steps: 5-8 steps\\n- quiz: exactly 5 questions\\n- slides: exactly 5 slides\\n- key_points: exactly 4 items\\n- No extra keys. Valid JSON only.\`;\n\nreturn [{ json: { sopText, prompt } }];`
+        },
+        id: 'prepare_prompt_v2',
+        name: 'Prepare Prompt',
+        type: 'n8n-nodes-base.code',
+        typeVersion: 2,
+        position: [20, 120]
+      },
+      {
+        parameters: {
+          method: 'POST',
+          url: provider.endpoint,
+          authentication: 'none',
+          sendHeaders: true,
+          headerParameters: { parameters: aiHeaders },
+          sendBody: true,
+          body: aiBody
+        },
+        id: 'ai_http_v2',
+        name: aiNodeName,
+        type: 'n8n-nodes-base.httpRequest',
+        typeVersion: 4.2,
+        position: [300, 120]
+      },
+      {
+        parameters: {
+          mode: 'runOnceForAllItems',
+          jsCode: `const payload = $input.first().json;\nconst raw = payload.content\n  ? payload.content.filter((block) => block.type === 'text').map((block) => block.text || '').join('')\n  : payload.choices?.[0]?.message?.content || '';\nconst clean = raw.replace(/^\\\`\\\`\\\`json\\s*/i, '').replace(/^\\\`\\\`\\\`\\s*/i, '').replace(/\\s*\\\`\\\`\\\`$/i, '').trim();\nconst start = clean.indexOf('{');\nconst end = clean.lastIndexOf('}');\n\nif (start === -1 || end === -1 || end < start) {\n  throw new Error('AI response did not contain a valid JSON object.');\n}\n\nconst parsed = JSON.parse(clean.slice(start, end + 1));\nreturn [{ json: parsed }];`
+        },
+        id: 'parse_json_v2',
+        name: 'Parse JSON',
+        type: 'n8n-nodes-base.code',
+        typeVersion: 2,
+        position: [580, 120]
+      },
+      {
+        parameters: {
+          resource: 'page',
+          operation: 'create',
+          title: '={{$json.title}}',
+          simple: true
+        },
+        id: 'notion_page_v2',
+        name: 'Notion Page',
+        type: 'n8n-nodes-base.notion',
+        typeVersion: 2.2,
+        position: [860, 20]
+      },
+      {
+        parameters: {
+          resource: 'message',
+          operation: 'send',
+          to: '={{$env.TRAINING_NOTIFY_EMAIL}}',
+          subject: 'New SOP training pack: {{$json.title}}',
+          message: '={{$json.summary}}'
+        },
+        id: 'gmail_notify_v2',
+        name: 'Send Email',
+        type: 'n8n-nodes-base.gmail',
+        typeVersion: 2.1,
+        position: [860, 220]
+      }
+    ],
+    connections: {
+      'Google Drive Trigger': { main: [[{ node: 'Download SOP File', type: 'main', index: 0 }]] },
+      'Download SOP File': { main: [[{ node: 'Extract From File', type: 'main', index: 0 }]] },
+      'Extract From File': { main: [[{ node: 'Prepare Prompt', type: 'main', index: 0 }]] },
+      'Prepare Prompt': { main: [[{ node: aiNodeName, type: 'main', index: 0 }]] },
+      [aiNodeName]: { main: [[{ node: 'Parse JSON', type: 'main', index: 0 }]] },
+      'Parse JSON': {
+        main: [[
+          { node: 'Notion Page', type: 'main', index: 0 },
+          { node: 'Send Email', type: 'main', index: 0 }
+        ]]
+      }
+    },
+    pinData: {},
+    settings: { executionOrder: 'v1' },
+    staticData: null,
+    meta: { templateCredsSetupCompleted: false },
+    tags: []
+  };
+}
+
+function hasExpectedShape(data) {
+  return Boolean(
+    data &&
+    typeof data.summary === 'string' &&
+    Array.isArray(data.key_points) &&
+    data.key_points.length === 4 &&
+    Array.isArray(data.steps) &&
+    data.steps.length >= 5 &&
+    data.steps.length <= 8 &&
+    Array.isArray(data.quiz) &&
+    data.quiz.length === 5 &&
+    Array.isArray(data.slides) &&
+    data.slides.length === 5
+  );
+}
+
+function loadSample(key) {
+  document.getElementById('sop-input').value = SAMPLES[key];
+}
+
+function clearAll() {
+  document.getElementById('sop-input').value = '';
+  document.getElementById('output').style.display = 'none';
+  document.getElementById('error-box').classList.remove('visible');
+  currentData = null;
+}
+
+function setLoading(msg) {
+  document.getElementById('loader').classList.add('visible');
+  document.getElementById('loader-msg').textContent = msg;
+  document.getElementById('proc-btn').disabled = true;
+  document.getElementById('btn-text').textContent = '⏳ Processing...';
+}
+
+function stopLoading() {
+  document.getElementById('loader').classList.remove('visible');
+  document.getElementById('proc-btn').disabled = false;
+  document.getElementById('btn-text').textContent = '▶ Generate Training';
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('visible');
+}
+
+async function processSOP() {
+  const sop = document.getElementById('sop-input').value.trim();
+  const apiKey = document.getElementById('api-key').value.trim();
+  const provider = getSelectedProvider();
+  if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
+  if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
+
+  document.getElementById('error-box').classList.remove('visible');
+  setLoading(`Sending SOP to ${provider.label} API...`);
+
+  const loaderMsgs = [
+    `Sending SOP to ${provider.label} API...`,
+    'Analyzing structure and objectives...',
+    'Generating training content...',
+    'Building quiz questions...',
+    'Preparing slide content...'
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loaderMsgs.length;
+    document.getElementById('loader-msg').textContent = loaderMsgs[msgIdx];
+  }, 1800);
+
+  const prompt = `You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.
+
+SOP:
+---
+${sop}
+---
+
+Respond ONLY with a valid JSON object — no markdown fences, no preamble, pure JSON:
+{
+  "title": "Short title of this SOP (max 6 words)",
+  "summary": "3-4 sentence structured summary covering objective, scope, key rules, and success criteria.",
+  "key_points": [
+    {"label": "Objective", "text": "one sentence"},
+    {"label": "Scope", "text": "one sentence"},
+    {"label": "Owner", "text": "team or role responsible"},
+    {"label": "Timeline", "text": "key time constraints"}
+  ],
+  "steps": [
+    {"num": 1, "title": "Short action title", "desc": "Detailed trainer explanation of this step.", "owner": "Support|CSM|Manager|All"}
+  ],
+  "quiz": [
+    {"q": "Question text?", "a": "Expected answer.", "difficulty": "easy|medium|hard"}
+  ],
+  "slides": [
+    {"type": "cover", "heading": "SOP Title", "body": "Subtitle or tagline"},
+    {"type": "overview", "heading": "Overview", "bullets": ["point 1", "point 2", "point 3"]},
+    {"type": "process", "heading": "Key Process Steps", "bullets": ["step summary 1", "step summary 2", "step summary 3", "step summary 4"]},
+    {"type": "roles", "heading": "Roles & Responsibilities", "bullets": ["role 1: responsibility", "role 2: responsibility"]},
+    {"type": "assessment", "heading": "Key Takeaways", "bullets": ["takeaway 1", "takeaway 2", "takeaway 3"]}
+  ]
+}
+
+Requirements:
+- steps: 5-8 steps, each with a clear title and detailed description
+- quiz: exactly 5 questions, mix of easy/medium/hard
+- slides: exactly 5 slides as shown above
+- key_points: exactly 4 items
+- No extra keys. Valid JSON only.`;
+
+  try {
+    const request = provider.buildRequest(prompt, apiKey);
+    const res = await fetch(request.url, request.options);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    let raw = provider.parseResponse(data);
+    let parsed = JSON.parse(extractJsonPayload(raw));
+
+    if (!hasExpectedShape(parsed)) {
+      document.getElementById('loader-msg').textContent = `Repairing ${provider.label} output format...`;
+      const repairPrompt = `${prompt}
+
+Your previous response did not follow the required structure exactly.
+Fix it and return valid JSON only with:
+- exactly 4 key_points
+- 5 to 8 steps
+- exactly 5 quiz questions
+- exactly 5 slides
+
+JSON to fix:
+${JSON.stringify(parsed)}`;
+      const repairRequest = provider.buildRequest(repairPrompt, apiKey);
+      const repairRes = await fetch(repairRequest.url, repairRequest.options);
+      const repairData = await repairRes.json();
+      if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
+      raw = provider.parseResponse(repairData);
+      parsed = JSON.parse(extractJsonPayload(raw));
+    }
+
+    clearInterval(msgInterval);
+    currentData = parsed;
+    renderOutput(parsed);
+    stopLoading();
+  } catch(err) {
+    clearInterval(msgInterval);
+    stopLoading();
+    showError('API Error: ' + err.message + '. Check console for details.');
+    console.error(err);
+  }
+}
+
+function renderOutput(d) {
+  // Summary
+  document.getElementById('summary-text').textContent = d.summary || '';
+  const kpEl = document.getElementById('key-points');
+  kpEl.innerHTML = '';
+  (d.key_points || []).forEach(kp => {
+    const div = document.createElement('div'); div.className = 'kp';
+    div.innerHTML = `<div class="kp-label">${kp.label}</div><div class="kp-text">${kp.text}</div>`;
+    kpEl.appendChild(div);
+  });
+
+  // Steps
+  document.getElementById('tc-steps').textContent = (d.steps||[]).length;
+  const stepsEl = document.getElementById('steps-list');
+  stepsEl.innerHTML = '';
+  const ownerMap = { Support: 'tag-support', CSM: 'tag-csm', Manager: 'tag-check', All: 'tag-check' };
+  (d.steps||[]).forEach(s => {
+    const tagClass = ownerMap[s.owner] || 'tag-support';
+    const div = document.createElement('div'); div.className = 'step-item';
+    div.innerHTML = `<div class="step-num">${s.num}</div><div class="step-body"><div class="step-title">${s.title}</div><div class="step-desc">${s.desc}</div><span class="step-tag ${tagClass}">${s.owner||'team'}</span></div>`;
+    stepsEl.appendChild(div);
+  });
+
+  // Quiz
+  document.getElementById('tc-quiz').textContent = (d.quiz||[]).length;
+  const quizEl = document.getElementById('quiz-list');
+  quizEl.innerHTML = '';
+  (d.quiz||[]).forEach((q,i) => {
+    const diffClass = { easy:'diff-easy', medium:'diff-medium', hard:'diff-hard' }[q.difficulty] || 'diff-easy';
+    const div = document.createElement('div'); div.className = 'quiz-item';
+    div.innerHTML = `
+      <div class="quiz-q-row" onclick="toggleQuiz(this)">
+        <span class="quiz-num">Q${i+1}</span>
+        <span class="quiz-q-text">${q.q}</span>
+        <span class="quiz-diff ${diffClass}">${q.difficulty||'easy'}</span>
+        <span class="quiz-toggle">+</span>
+      </div>
+      <div class="quiz-answer">
+        <div class="quiz-answer-inner">${q.a}</div>
+      </div>`;
+    quizEl.appendChild(div);
+  });
+
+  // Slides
+  slides = d.slides || [];
+  document.getElementById('tc-slides').textContent = slides.length;
+  currentSlide = 0;
+  renderSlides();
+
+  // Show output
+  const out = document.getElementById('output');
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  switchTabById('summary');
+}
+
+function renderSlides() {
+  const viewer = document.getElementById('slide-viewer');
+  const printDeck = document.getElementById('slides-print-deck');
+  viewer.innerHTML = '';
+  printDeck.innerHTML = '';
+  slides.forEach((s, i) => {
+    const bullets = (s.bullets || [])
+      .map((b, bulletIndex) => `<li data-step="${String(bulletIndex + 1).padStart(2, '0')}"><span>${b}</span></li>`)
+      .join('');
+    const variantClass = `slide-${s.type || 'overview'}`;
+    const slideMarkup = `
+      <div class="slide-shell">
+        <div class="slide-kicker">${s.type || 'slide'} • training deck</div>
+        <div class="slide-type">${s.type}</div>
+        <div class="slide-title">${s.heading}</div>
+        ${s.body ? `<div class="slide-body">${s.body}</div>` : ''}
+        ${bullets ? `<ul class="slide-list">${bullets}</ul>` : ''}
+        <div class="slide-num-badge">${i+1} / ${slides.length}</div>
+      </div>`;
+
+    const div = document.createElement('div');
+    div.className = `slide ${variantClass}${i === 0 ? ' active' : ''}${s.type === 'cover' ? ' slide-cover' : ''}`;
+    div.innerHTML = slideMarkup;
+    viewer.appendChild(div);
+
+    const printSlide = document.createElement('div');
+    printSlide.className = `slide ${variantClass}${s.type === 'cover' ? ' slide-cover' : ''}`;
+    printSlide.innerHTML = slideMarkup;
+    printDeck.appendChild(printSlide);
+  });
+  updateSlideNav();
+}
+
+function prevSlide() {
+  if (currentSlide > 0) { currentSlide--; updateSlideView(); }
+}
+function nextSlide() {
+  if (currentSlide < slides.length - 1) { currentSlide++; updateSlideView(); }
+}
+function updateSlideView() {
+  document.querySelectorAll('.slide').forEach((s,i) => s.classList.toggle('active', i === currentSlide));
+  updateSlideNav();
+}
+function updateSlideNav() {
+  document.getElementById('slide-counter').textContent = `${currentSlide+1} / ${slides.length}`;
+  document.getElementById('slide-prev').disabled = currentSlide === 0;
+  document.getElementById('slide-next').disabled = currentSlide === slides.length - 1;
+}
+
+function toggleQuiz(row) {
+  const ans = row.nextElementSibling;
+  const tog = row.querySelector('.quiz-toggle');
+  ans.classList.toggle('open');
+  tog.classList.toggle('open');
+}
+
+function switchTab(tabId, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + tabId).classList.add('active');
+}
+
+function switchTabById(tabId) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['summary','steps','quiz','slides','n8n'];
+    t.classList.toggle('active', ids[i] === tabId);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tabId).classList.add('active');
+}
+
+function copyJSON() {
+  if (!currentData) return;
+  navigator.clipboard.writeText(JSON.stringify(currentData, null, 2))
+    .then(() => alert('JSON copied to clipboard!'));
+}
+
+function copyN8nJSON() {
+  navigator.clipboard.writeText(JSON.stringify(buildN8nWorkflow(getSelectedProvider()), null, 2))
+    .then(() => alert('n8n workflow JSON copied to clipboard!'));
+}
+
+function downloadSlidesPDF() {
+  document.body.classList.add('print-slides');
+  window.print();
+  setTimeout(() => document.body.classList.remove('print-slides'), 300);
+}
+
+function printOutput() { window.print(); }
+
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('print-slides');
+});
+
+updateProviderUI();
+</script>
+</body>
+</html>
