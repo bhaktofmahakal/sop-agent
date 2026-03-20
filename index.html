@@ -1615,7 +1615,28 @@ function buildN8nWorkflow(provider) {
         ]]
       }
     },
-    pinData: {},
+    pinData: {
+      ...(context.sopText ? {
+        'Prepare Prompt': [
+          {
+            json: {
+              sopText: context.sopText,
+              prompt: pinnedPrompt
+            }
+          }
+        ]
+      } : {}),
+      ...(context.generated ? {
+        'Parse JSON': [{ json: context.generated }],
+        'Notion Page': [{ json: context.generated }],
+        'Send Email': [{
+          json: {
+            title: context.generated.title || context.title,
+            summary: context.generated.summary || ''
+          }
+        }]
+      } : {})
+    },
     settings: { executionOrder: 'v1' },
     staticData: null,
     meta: { templateCredsSetupCompleted: false },
