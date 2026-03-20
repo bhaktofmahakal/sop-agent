@@ -48,3 +48,7 @@ This repository intentionally excludes local-only files such as:
 - local logs
 - deploy tarballs
 - scratch JSON files
+
+## Deployment
+
+The app can be deployed as a plain static site on Vercel without a build step because everything lives in `index.html`.
