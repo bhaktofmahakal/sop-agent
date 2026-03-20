@@ -1,0 +1,11 @@
+.agents/
+.vercel/
+.vercel-deploy-temp/
+.zencoder/
+.zenflow/
+deploy-package.tgz
+g.json
+server.log
+server.err
+skills-lock.json
+*.log
