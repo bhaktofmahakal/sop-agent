@@ -1454,7 +1454,10 @@ function buildN8nWorkflowLegacy(provider) {
 }
 
 function buildN8nWorkflow(provider) {
+  const context = arguments[1] || getWorkflowContext();
   const aiNodeName = `${provider.label} API`;
+  const fallbackTitle = escapeForN8nFallback(context.title);
+  const pinnedPrompt = context.sopText ? buildTrainingPrompt(context.sopText) : '';
   const aiHeaders = provider.id === 'anthropic'
     ? [
         { name: 'x-api-key', value: '={{$env.AI_API_KEY}}' },
@@ -1496,7 +1499,7 @@ function buildN8nWorkflow(provider) {
       };
 
   return {
-    name: `SOP to ${provider.label} Training Pipeline`,
+    name: `${context.title} · ${provider.label} SOP Pipeline`,
     active: false,
     nodes: [
       {
@@ -1575,7 +1578,7 @@ function buildN8nWorkflow(provider) {
         parameters: {
           resource: 'page',
           operation: 'create',
-          title: '={{$json.title}}',
+          title: `={{$json.title || "${fallbackTitle}"}}`,
           simple: true
         },
         id: 'notion_page_v2',
@@ -1589,7 +1592,7 @@ function buildN8nWorkflow(provider) {
           resource: 'message',
           operation: 'send',
           to: '={{$env.TRAINING_NOTIFY_EMAIL}}',
-          subject: 'New SOP training pack: {{$json.title}}',
+          subject: `New SOP training pack: {{$json.title || "${fallbackTitle}"}}`,
           message: '={{$json.summary}}'
         },
         id: 'gmail_notify_v2',
@@ -1619,6 +1622,69 @@ function buildN8nWorkflow(provider) {
     tags: []
   };
 }
+
+function deriveSopTitle(sopText) {
+  const firstLine = (sopText || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean) || 'Custom SOP';
+  return firstLine
+    .replace(/\s*[-–—]\s*version.*$/i, '')
+    .replace(/\s+SOP\s*$/i, '')
+    .slice(0, 48)
+    .trim() || 'Custom SOP';
+}
+
+function escapeForN8nFallback(value) {
+  return String(value || 'Custom SOP')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r?\n/g, ' ')
+    .trim();
+}
+
+function buildTrainingPrompt(sopText) {
+  return `You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.
+
+SOP:
+---
+${sopText}
+---
+
+Respond ONLY with a valid JSON object — no markdown fences, no preamble, pure JSON:
+{
+  "title": "Short title of this SOP (max 6 words)",
+  "summary": "3-4 sentence structured summary covering objective, scope, key rules, and success criteria.",
+  "key_points": [
+    {"label": "Objective", "text": "one sentence"},
+    {"label": "Scope", "text": "one sentence"},
+    {"label": "Owner", "text": "team or role responsible"},
+    {"label": "Timeline", "text": "key time constraints"}
+  ],
+  "steps": [
+    {"num": 1, "title": "Short action title", "desc": "Detailed trainer explanation of this step.", "owner": "Support|CSM|Manager|All"}
+  ],
+  "quiz": [
+    {"q": "Question text?", "a": "Expected answer.", "difficulty": "easy|medium|hard"}
+  ],
+  "slides": [
+    {"type": "cover", "heading": "SOP Title", "body": "Subtitle or tagline"},
+    {"type": "overview", "heading": "Overview", "bullets": ["point 1", "point 2", "point 3"]},
+    {"type": "process", "heading": "Key Process Steps", "bullets": ["step summary 1", "step summary 2", "step summary 3", "step summary 4"]},
+    {"type": "roles", "heading": "Roles & Responsibilities", "bullets": ["role 1: responsibility", "role 2: responsibility"]},
+    {"type": "assessment", "heading": "Key Takeaways", "bullets": ["takeaway 1", "takeaway 2", "takeaway 3"]}
+  ]
+}
+
+Requirements:
+- steps: 5-8 steps, each with a clear title and detailed description
+- quiz: exactly 5 questions, mix of easy/medium/hard
+- slides: exactly 5 slides as shown above
+- key_points: exactly 4 items
+- No extra keys. Valid JSON only.`;
+}
+
+
 
 function hasExpectedShape(data) {
   return Boolean(
@@ -1689,7 +1755,7 @@ async function processSOP() {
     document.getElementById('loader-msg').textContent = loaderMsgs[msgIdx];
   }, 1800);
 
-  const prompt = `You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.
+  const promptTemplate = `You are an expert training content designer. Analyze the given SOP document and produce comprehensive training material.
 
 SOP:
 ---
@@ -1727,6 +1793,7 @@ Requirements:
 - slides: exactly 5 slides as shown above
 - key_points: exactly 4 items
 - No extra keys. Valid JSON only.`;
+  const prompt = buildTrainingPrompt(sop);
 
   try {
     const request = provider.buildRequest(prompt, apiKey);
@@ -1904,8 +1971,13 @@ function copyJSON() {
 }
 
 function copyN8nJSON() {
-  navigator.clipboard.writeText(JSON.stringify(buildN8nWorkflow(getSelectedProvider()), null, 2))
-    .then(() => alert('n8n workflow JSON copied to clipboard!'));
+  const context = getWorkflowContext();
+  if (!context.sopText) {
+    alert('Paste or generate an SOP first to copy an SOP-specific n8n workflow.');
+    return;
+  }
+  navigator.clipboard.writeText(JSON.stringify(buildN8nWorkflow(getSelectedProvider(), context), null, 2))
+    .then(() => alert(`n8n workflow JSON copied for ${context.title}!`));
 }
 
 function downloadSlidesPDF() {
