@@ -1,4 +1,5 @@
-# SOP Agent
+# SOP Agent [Live Demo at](https://agent-sop-beige.vercel.app/)
+# AI Resume screening automation [Live Demo at](https://resume-screener-pi.vercel.app)  
 
 Single-file SOP to training generator built as a plain HTML app.
 
