@@ -22,3 +22,15 @@ Single-file SOP to training generator built as a plain HTML app.
 - Quiz with expandable answers
 - Presentation-style slides
 - Import-ready n8n workflow JSON
+
+## Workflow Export
+
+The workflow JSON is designed for n8n import and models a PDF-first flow:
+
+- Google Drive Trigger
+- Download SOP File
+- Extract From File
+- Provider-aware HTTP Request
+- Parse JSON
+- Notion Page
+- Gmail notification
