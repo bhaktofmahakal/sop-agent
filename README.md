@@ -8,3 +8,9 @@ Single-file SOP to training generator built as a plain HTML app.
 - `AI_Automation_Intern_Assessment.docx.md`: assignment brief
 - `README.md`: project overview
 - `.gitignore`: GitHub-safe ignore rules
+
+## Supported Providers
+
+- Groq
+- Claude
+- GPT / OpenAI
