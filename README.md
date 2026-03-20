@@ -34,3 +34,7 @@ The workflow JSON is designed for n8n import and models a PDF-first flow:
 - Parse JSON
 - Notion Page
 - Gmail notification
+
+## Local Usage
+
+Open `index.html` directly in a browser, paste SOP text, select a provider, enter your API key, and generate outputs from the same single-file UI.
