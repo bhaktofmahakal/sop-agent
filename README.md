@@ -14,3 +14,11 @@ Single-file SOP to training generator built as a plain HTML app.
 - Groq
 - Claude
 - GPT / OpenAI
+
+## Generated Outputs
+
+- Structured SOP summary
+- Training steps
+- Quiz with expandable answers
+- Presentation-style slides
+- Import-ready n8n workflow JSON
