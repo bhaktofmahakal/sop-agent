@@ -1684,7 +1684,12 @@ Requirements:
 - No extra keys. Valid JSON only.`;
 }
 
-
+function getWorkflowContext() {
+  const sopText = document.getElementById('sop-input').value.trim();
+  const generated = currentData && typeof currentData === 'object' ? currentData : null;
+  const title = generated?.title || deriveSopTitle(sopText);
+  return { sopText, generated, title };
+}
 
 function hasExpectedShape(data) {
   return Boolean(
