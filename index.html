@@ -1318,6 +1318,8 @@ const SAMPLES = {
   safety: `Workplace Safety SOP — Emergency Evacuation\n\nPurpose: Safe and orderly evacuation of all personnel during emergencies.\n\nTriggers: Fire alarm, gas leak, bomb threat, structural emergency.\n\nRoles: Floor Wardens lead evacuation. Safety Officer coordinates with emergency services. Reception accounts for visitors.\n\nEvacuation Steps:\n1. On alarm activation, immediately stop all work.\n2. Leave personal belongings. Take only keys and access cards.\n3. Use designated stairwells — do not use elevators.\n4. Assist anyone with mobility issues to nearest refuge area.\n5. Proceed to assembly point — main parking lot for HQ.\n6. Floor Warden takes headcount and reports to Safety Officer.\n7. Do not re-enter until All Clear is given by Safety Officer.\n\nSpecial Instructions:\n- Server room staff must power down critical systems before evacuating.\n- Do not use mobile phones in stairwells.\n- Visitors must be escorted by their host.`
 };
 
+const N8N_URL = 'https://n8n.io';
+
 const PROVIDERS = {
   groq: {
     id: 'groq',
@@ -1353,9 +1355,9 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Claude requires a CORS-enabled proxy (n8n at https://n8n.io or your own server) because the API blocks browser calls.',
+    note: `Claude requires a CORS-enabled proxy (n8n at ${N8N_URL} or your own server) because the API blocks browser calls.`,
     placeholder: 'Enter Claude API key',
-    proxyNote: 'Paste your n8n (https://n8n.io) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages.',
+    proxyNote: `Paste your n8n (${N8N_URL}) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages.`,
     proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
@@ -1455,9 +1457,10 @@ function getProxyUrl() {
 }
 
 function isValidProxyUrl(proxyUrl) {
+  if (!proxyUrl) return false;
   try {
     const parsed = new URL(proxyUrl);
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    return parsed.protocol === 'https:';
   } catch {
     return false;
   }
