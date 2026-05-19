@@ -1335,8 +1335,8 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Claude API blocks direct browser calls (CORS). Use n8n/server-side execution.',
-    placeholder: 'Anthropic key works via n8n/server-side proxy',
+    note: 'Claude API blocks direct browser calls (CORS). Use n8n workflow automation or server-side execution.',
+    placeholder: 'Not supported in browser - use n8n/server proxy',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
     buildRequest(prompt, apiKey) {
@@ -1918,7 +1918,7 @@ async function processSOP() {
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
   if (provider.id === 'anthropic') {
-    showError('Claude API cannot be called directly from this browser app due to CORS. Use Groq/GPT in-browser, or run Claude through exported n8n/server-side workflow.');
+    showError('Claude API cannot be called directly from this browser app due to CORS. Use Groq/GPT in-browser, or run Claude through n8n workflow automation or a server-side implementation.');
     return;
   }
 
