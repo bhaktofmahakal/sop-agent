@@ -243,6 +243,13 @@
   .api-key-wrap {
     margin-top: 0;
   }
+  .proxy-wrap {
+    margin-top: 12px;
+    display: none;
+  }
+  .proxy-wrap.is-visible {
+    display: flex;
+  }
   .provider-row {
     display: grid;
     grid-template-columns: 160px 1fr;
@@ -1153,6 +1160,18 @@
         <div class="api-key-note" id="api-key-note">Get free API key at console.groq.com</div>
       </div>
     </div>
+    <div class="api-key-wrap proxy-wrap" id="proxy-wrap">
+      <div class="provider-label">Claude Proxy URL</div>
+      <input
+        id="proxy-url"
+        class="api-key-input"
+        type="url"
+        autocomplete="off"
+        aria-label="Claude proxy URL"
+        aria-describedby="proxy-note"
+      >
+      <div class="api-key-note" id="proxy-note"></div>
+    </div>
     <div class="samples-row">
       <span class="samples-label">load sample →</span>
       <div class="chip" onclick="loadSample('onboarding')">Customer Onboarding</div>
@@ -1309,7 +1328,7 @@ const PROVIDERS = {
     placeholder: 'Enter Groq API key (free at console.groq.com)',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     model: 'llama-3.3-70b-versatile',
-    buildRequest(prompt, apiKey) {
+    buildRequest(prompt, apiKey, _options = {}) {
       return {
         url: this.endpoint,
         options: {
@@ -1335,13 +1354,16 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Claude API blocks direct browser calls (CORS). Use n8n workflow automation or server-side execution.',
-    placeholder: 'Not supported in browser - use n8n/server proxy',
+    note: 'Claude requires a CORS-enabled proxy (n8n at https://n8n.io or your own server) because the API blocks browser calls.',
+    placeholder: 'Enter Claude API key',
+    proxyNote: 'Paste your n8n (https://n8n.io) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages and passes x-api-key + anthropic-version headers.',
+    proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
-    buildRequest(prompt, apiKey) {
+    buildRequest(prompt, apiKey, options = {}) {
+      const { proxyUrl } = options;
       return {
-        url: this.endpoint,
+        url: proxyUrl,
         options: {
           method: 'POST',
           headers: {
@@ -1373,7 +1395,7 @@ const PROVIDERS = {
     placeholder: 'Enter OpenAI API key',
     endpoint: 'https://api.openai.com/v1/chat/completions',
     model: 'gpt-4o-mini',
-    buildRequest(prompt, apiKey) {
+    buildRequest(prompt, apiKey, _options = {}) {
       return {
         url: this.endpoint,
         options: {
@@ -1428,15 +1450,53 @@ function getSelectedProvider() {
   return PROVIDERS[providerId] || PROVIDERS.groq;
 }
 
+function getProxyUrl() {
+  const proxyInput = document.getElementById('proxy-url');
+  return proxyInput ? proxyInput.value.trim() : '';
+}
+
+function isValidProxyUrl(proxyUrl) {
+  if (!proxyUrl) return false;
+  try {
+    const parsed = new URL(proxyUrl);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function requireValidProxyUrl() {
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) {
+    showError('Claude requires a CORS-enabled proxy URL. Add your n8n webhook or server proxy URL to continue.');
+    return '';
+  }
+  if (!isValidProxyUrl(proxyUrl)) {
+    showError('Please enter a valid https proxy URL for Claude.');
+    return '';
+  }
+  return proxyUrl;
+}
+
 function updateProviderUI() {
   const provider = getSelectedProvider();
   const apiKeyInput = document.getElementById('api-key');
   const apiKeyNote = document.getElementById('api-key-note');
   const loaderMsg = document.getElementById('loader-msg');
+  const proxyWrap = document.getElementById('proxy-wrap');
+  const proxyInput = document.getElementById('proxy-url');
+  const proxyNote = document.getElementById('proxy-note');
 
   apiKeyInput.placeholder = provider.placeholder;
   apiKeyNote.textContent = provider.note;
   loaderMsg.textContent = `Sending SOP to ${provider.label} API...`;
+  if (provider.id === 'anthropic') {
+    proxyWrap.classList.add('is-visible');
+    proxyInput.placeholder = provider.proxyPlaceholder;
+    proxyNote.textContent = provider.proxyNote;
+  } else {
+    proxyWrap.classList.remove('is-visible');
+  }
 }
 
 function buildN8nWorkflowLegacy(provider) {
@@ -1917,10 +1977,8 @@ async function processSOP() {
   const provider = getSelectedProvider();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
-  if (provider.id === 'anthropic') {
-    showError('Claude API cannot be called directly from this browser app due to CORS. Use Groq/GPT in-browser, or run Claude through n8n workflow automation or a server-side implementation.');
-    return;
-  }
+  const proxyUrl = provider.id === 'anthropic' ? requireValidProxyUrl() : '';
+  if (provider.id === 'anthropic' && !proxyUrl) { return; }
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);
@@ -1979,7 +2037,7 @@ Requirements:
   const prompt = buildTrainingPrompt(sop);
 
   try {
-    const request = provider.buildRequest(prompt, apiKey);
+    const request = provider.buildRequest(prompt, apiKey, { proxyUrl });
     const res = await fetch(request.url, request.options);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -1999,7 +2057,7 @@ Fix it and return valid JSON only with:
 
 JSON to fix:
 ${JSON.stringify(parsed)}`;
-      const repairRequest = provider.buildRequest(repairPrompt, apiKey);
+      const repairRequest = provider.buildRequest(repairPrompt, apiKey, { proxyUrl });
       const repairRes = await fetch(repairRequest.url, repairRequest.options);
       const repairData = await repairRes.json();
       if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
