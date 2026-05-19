@@ -1353,15 +1353,15 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Claude requires a CORS-enabled proxy (n8n or server) because the API blocks browser calls.',
+    note: 'Claude requires a CORS-enabled proxy (n8n at https://n8n.io or your own server) because the API blocks browser calls.',
     placeholder: 'Enter Claude API key',
-    proxyNote: 'Paste your n8n webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages.',
+    proxyNote: 'Paste your n8n (https://n8n.io) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages.',
     proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
     buildRequest(prompt, apiKey, proxyUrl) {
       return {
-        url: proxyUrl || this.endpoint,
+        url: proxyUrl,
         options: {
           method: 'POST',
           headers: {
