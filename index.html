@@ -1126,6 +1126,7 @@
 
   <!-- INPUT -->
   <div class="input-card">
+    <form onsubmit="event.preventDefault(); processSOP();">
     <div class="input-header">
       <div class="input-title">SOP Document</div>
       <div class="input-meta">text / paste</div>
@@ -1159,11 +1160,12 @@
       <div class="chip" onclick="loadSample('safety')">Safety Protocol</div>
     </div>
     <div class="btn-row">
-      <button class="btn-process" id="proc-btn" onclick="processSOP()">
+      <button class="btn-process" id="proc-btn" type="submit">
         <span id="btn-text">▶ Generate Training</span>
       </button>
-      <button class="btn-sec" onclick="clearAll()">✕ Clear</button>
+      <button class="btn-sec" type="button" onclick="clearAll()">✕ Clear</button>
     </div>
+    </form>
   </div>
 
   <!-- LOADER -->
@@ -1333,8 +1335,8 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Enter your Anthropic API key from console.anthropic.com',
-    placeholder: 'Enter Anthropic API key',
+    note: 'Claude API blocks direct browser calls (CORS). Use n8n/server-side execution.',
+    placeholder: 'Anthropic key works via n8n/server-side proxy',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
     buildRequest(prompt, apiKey) {
@@ -1915,6 +1917,10 @@ async function processSOP() {
   const provider = getSelectedProvider();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
+  if (provider.id === 'anthropic') {
+    showError('Claude API cannot be called directly from this browser app due to CORS. Use Groq/GPT in-browser, or run Claude through exported n8n/server-side workflow.');
+    return;
+  }
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);
