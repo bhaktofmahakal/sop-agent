@@ -1168,9 +1168,8 @@
         type="url"
         autocomplete="off"
         aria-label="Claude proxy URL"
-        placeholder="https://your-proxy.example.com/claude"
       >
-      <div class="api-key-note" id="proxy-note">Use an n8n webhook or server proxy that forwards to https://api.anthropic.com/v1/messages and enables CORS.</div>
+      <div class="api-key-note" id="proxy-note"></div>
     </div>
     <div class="samples-row">
       <span class="samples-label">load sample →</span>
@@ -1328,7 +1327,7 @@ const PROVIDERS = {
     placeholder: 'Enter Groq API key (free at console.groq.com)',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     model: 'llama-3.3-70b-versatile',
-    buildRequest(prompt, apiKey) {
+    buildRequest(prompt, apiKey, _proxyUrl) {
       return {
         url: this.endpoint,
         options: {
@@ -1394,7 +1393,7 @@ const PROVIDERS = {
     placeholder: 'Enter OpenAI API key',
     endpoint: 'https://api.openai.com/v1/chat/completions',
     model: 'gpt-4o-mini',
-    buildRequest(prompt, apiKey) {
+    buildRequest(prompt, apiKey, _proxyUrl) {
       return {
         url: this.endpoint,
         options: {
@@ -1449,17 +1448,9 @@ function getSelectedProvider() {
   return PROVIDERS[providerId] || PROVIDERS.groq;
 }
 
-function getProxyUrl(provider) {
-  if (!provider || provider.id !== 'anthropic') return '';
+function getProxyUrl() {
   const proxyInput = document.getElementById('proxy-url');
   return proxyInput ? proxyInput.value.trim() : '';
-}
-
-function buildProviderRequest(provider, prompt, apiKey, proxyUrl) {
-  if (provider.id === 'anthropic') {
-    return provider.buildRequest(prompt, apiKey, proxyUrl);
-  }
-  return provider.buildRequest(prompt, apiKey);
 }
 
 function updateProviderUI() {
@@ -1476,8 +1467,8 @@ function updateProviderUI() {
   loaderMsg.textContent = `Sending SOP to ${provider.label} API...`;
   if (provider.id === 'anthropic') {
     proxyWrap.classList.add('is-visible');
-    proxyInput.placeholder = provider.proxyPlaceholder || 'https://your-proxy.example.com/claude';
-    proxyNote.textContent = provider.proxyNote || 'Use an n8n webhook or server proxy that forwards to https://api.anthropic.com/v1/messages and enables CORS.';
+    proxyInput.placeholder = provider.proxyPlaceholder;
+    proxyNote.textContent = provider.proxyNote;
   } else {
     proxyWrap.classList.remove('is-visible');
   }
@@ -1959,7 +1950,7 @@ async function processSOP() {
   const sop = document.getElementById('sop-input').value.trim();
   const apiKey = document.getElementById('api-key').value.trim();
   const provider = getSelectedProvider();
-  const proxyUrl = getProxyUrl(provider);
+  const proxyUrl = getProxyUrl();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
   if (provider.id === 'anthropic' && !proxyUrl) {
@@ -2024,7 +2015,7 @@ Requirements:
   const prompt = buildTrainingPrompt(sop);
 
   try {
-    const request = buildProviderRequest(provider, prompt, apiKey, proxyUrl);
+    const request = provider.buildRequest(prompt, apiKey, proxyUrl);
     const res = await fetch(request.url, request.options);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -2044,7 +2035,7 @@ Fix it and return valid JSON only with:
 
 JSON to fix:
 ${JSON.stringify(parsed)}`;
-      const repairRequest = buildProviderRequest(provider, repairPrompt, apiKey, proxyUrl);
+      const repairRequest = provider.buildRequest(repairPrompt, apiKey, proxyUrl);
       const repairRes = await fetch(repairRequest.url, repairRequest.options);
       const repairData = await repairRes.json();
       if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
