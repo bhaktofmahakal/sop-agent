@@ -1528,7 +1528,10 @@ async function sendProviderRequest(provider, prompt, apiKey, proxyUrl) {
   if (canUseAppProxy()) {
     try {
       return await fetchViaAppProxy(appRequest);
-    } catch {
+    } catch (err) {
+      if (err?.code !== 'APP_PROXY_MISSING') {
+        console.warn('App proxy request failed, falling back to direct request.', err);
+      }
       if (!directRequest) {
         throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable.');
       }
