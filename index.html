@@ -1354,16 +1354,18 @@ const PROVIDERS = {
     id: 'anthropic',
     label: 'Claude',
     badge: 'CLAUDE',
-    note: 'Claude requires a CORS-enabled proxy (n8n at https://n8n.io or your own server) because the API blocks browser calls.',
+    note: 'Claude works via the built-in app proxy when hosted. For local/self-hosted use, provide a CORS-enabled proxy (n8n at https://n8n.io or your own server).',
     placeholder: 'Enter Claude API key',
-    proxyNote: 'Paste your n8n (https://n8n.io) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages and passes x-api-key + anthropic-version headers.',
+    proxyNote: 'Optional on the hosted app. For local/self-hosted, paste your n8n (https://n8n.io) webhook or server proxy URL that forwards to https://api.anthropic.com/v1/messages and passes x-api-key + anthropic-version headers.',
     proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
     buildRequest(prompt, apiKey, options = {}) {
-      const { proxyUrl } = options;
+      const { proxyUrl, useAppProxy } = options;
+      const targetUrl = useAppProxy ? this.endpoint : proxyUrl;
+      if (!targetUrl) return null;
       return {
-        url: proxyUrl,
+        url: targetUrl,
         options: {
           method: 'POST',
           headers: {
@@ -1419,6 +1421,8 @@ const PROVIDERS = {
   }
 };
 
+const APP_PROXY_PATH = '/api/ai';
+
 let currentData = null;
 let currentSlide = 0;
 let slides = [];
@@ -1465,17 +1469,14 @@ function isValidProxyUrl(proxyUrl) {
   }
 }
 
-function requireValidProxyUrl() {
+function getValidatedProxyUrl() {
   const proxyUrl = getProxyUrl();
-  if (!proxyUrl) {
-    showError('Claude requires a CORS-enabled proxy URL. Add your n8n webhook or server proxy URL to continue.');
-    return '';
-  }
+  if (!proxyUrl) return { value: '', isValid: false, hasValue: false };
   if (!isValidProxyUrl(proxyUrl)) {
     showError('Please enter a valid https proxy URL for Claude.');
-    return '';
+    return { value: '', isValid: false, hasValue: true };
   }
-  return proxyUrl;
+  return { value: proxyUrl, isValid: true, hasValue: true };
 }
 
 function updateProviderUI() {
@@ -1497,6 +1498,55 @@ function updateProviderUI() {
   } else {
     proxyWrap.classList.remove('is-visible');
   }
+}
+
+function canUseAppProxy() {
+  return window.location.protocol !== 'file:';
+}
+
+async function fetchViaAppProxy(request) {
+  const res = await fetch(APP_PROXY_PATH, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ request })
+  });
+  const contentType = res.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+  if ((res.status === 404 || res.status === 405) && !isJson) {
+    const err = new Error('APP_PROXY_MISSING');
+    err.code = 'APP_PROXY_MISSING';
+    throw err;
+  }
+  return res;
+}
+
+async function sendProviderRequest(provider, prompt, apiKey, proxyUrl) {
+  const appRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: true });
+  if (!appRequest) throw new Error('Unable to build provider request.');
+
+  const sendDirectRequest = async () => {
+    const directRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: false });
+    if (!directRequest) {
+      throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable (file:// or missing /api/ai). Add your proxy URL in the Claude Proxy field.');
+    }
+    return await fetch(directRequest.url, directRequest.options);
+  };
+
+  if (canUseAppProxy()) {
+    try {
+      return await fetchViaAppProxy(appRequest);
+    } catch (err) {
+      if (err?.code !== 'APP_PROXY_MISSING') {
+        console.warn(
+          `App proxy request failed for ${provider.label}, falling back to direct request.`,
+          err?.name || err?.code || 'unknown_error'
+        );
+      }
+      return await sendDirectRequest();
+    }
+  }
+
+  return await sendDirectRequest();
 }
 
 function buildN8nWorkflowLegacy(provider) {
@@ -1977,8 +2027,11 @@ async function processSOP() {
   const provider = getSelectedProvider();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
-  const proxyUrl = provider.id === 'anthropic' ? requireValidProxyUrl() : '';
-  if (provider.id === 'anthropic' && !proxyUrl) { return; }
+  const proxyResult = provider.id === 'anthropic'
+    ? getValidatedProxyUrl()
+    : { value: '', isValid: true, hasValue: false };
+  if (provider.id === 'anthropic' && proxyResult.hasValue && !proxyResult.isValid) { return; }
+  const proxyUrl = proxyResult.value;
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);
@@ -2037,8 +2090,7 @@ Requirements:
   const prompt = buildTrainingPrompt(sop);
 
   try {
-    const request = provider.buildRequest(prompt, apiKey, { proxyUrl });
-    const res = await fetch(request.url, request.options);
+    const res = await sendProviderRequest(provider, prompt, apiKey, proxyUrl);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
     let raw = provider.parseResponse(data);
@@ -2057,8 +2109,7 @@ Fix it and return valid JSON only with:
 
 JSON to fix:
 ${JSON.stringify(parsed)}`;
-      const repairRequest = provider.buildRequest(repairPrompt, apiKey, { proxyUrl });
-      const repairRes = await fetch(repairRequest.url, repairRequest.options);
+      const repairRes = await sendProviderRequest(provider, repairPrompt, apiKey, proxyUrl);
       const repairData = await repairRes.json();
       if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
       raw = provider.parseResponse(repairData);
