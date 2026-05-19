@@ -112,6 +112,6 @@ module.exports = async function handler(req, res) {
     }
     res.status(upstreamRes.status).send(text);
   } catch (error) {
-    res.status(502).json({ error: 'Upstream request failed.' });
+    res.status(502).json({ error: 'Upstream request failed.', type: 'network_error' });
   }
 };
