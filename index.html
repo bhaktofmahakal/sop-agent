@@ -1527,7 +1527,7 @@ async function sendProviderRequest(provider, prompt, apiKey, proxyUrl) {
   const sendDirectRequest = async () => {
     const directRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: false });
     if (!directRequest) {
-      throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable. Add your proxy URL in the Claude Proxy field.');
+      throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable (file:// or missing /api/ai). Add your proxy URL in the Claude Proxy field.');
     }
     return await fetch(directRequest.url, directRequest.options);
   };
@@ -1537,7 +1537,10 @@ async function sendProviderRequest(provider, prompt, apiKey, proxyUrl) {
       return await fetchViaAppProxy(appRequest);
     } catch (err) {
       if (err?.code !== 'APP_PROXY_MISSING') {
-        console.warn(`App proxy request failed for ${provider.label}, falling back to direct request.`);
+        console.warn(
+          `App proxy request failed for ${provider.label}, falling back to direct request.`,
+          err?.name || err?.code || 'unknown_error'
+        );
       }
       return await sendDirectRequest();
     }
