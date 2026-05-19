@@ -1471,12 +1471,12 @@ function isValidProxyUrl(proxyUrl) {
 
 function getValidatedProxyUrl() {
   const proxyUrl = getProxyUrl();
-  if (!proxyUrl) return '';
+  if (!proxyUrl) return { value: '', isValid: true };
   if (!isValidProxyUrl(proxyUrl)) {
     showError('Please enter a valid https proxy URL for Claude.');
-    return null;
+    return { value: '', isValid: false };
   }
-  return proxyUrl;
+  return { value: proxyUrl, isValid: true };
 }
 
 function updateProviderUI() {
@@ -1522,27 +1522,28 @@ async function fetchViaAppProxy(request) {
 
 async function sendProviderRequest(provider, prompt, apiKey, proxyUrl) {
   const appRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: true });
-  const directRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: false });
   if (!appRequest) throw new Error('Unable to build provider request.');
+
+  const sendDirectRequest = async () => {
+    const directRequest = provider.buildRequest(prompt, apiKey, { proxyUrl, useAppProxy: false });
+    if (!directRequest) {
+      throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable.');
+    }
+    return await fetch(directRequest.url, directRequest.options);
+  };
 
   if (canUseAppProxy()) {
     try {
       return await fetchViaAppProxy(appRequest);
     } catch (err) {
       if (err?.code !== 'APP_PROXY_MISSING') {
-        console.warn('App proxy request failed, falling back to direct request.', err);
+        console.warn(`App proxy request failed for ${provider.label}, falling back to direct request.`, err);
       }
-      if (!directRequest) {
-        throw new Error('Claude requires a CORS-enabled proxy URL when the app proxy is unavailable.');
-      }
-      return await fetch(directRequest.url, directRequest.options);
+      return await sendDirectRequest();
     }
   }
 
-  if (!directRequest) {
-    throw new Error('Claude requires a CORS-enabled proxy URL when running from a local file.');
-  }
-  return await fetch(directRequest.url, directRequest.options);
+  return await sendDirectRequest();
 }
 
 function buildN8nWorkflowLegacy(provider) {
@@ -2023,8 +2024,9 @@ async function processSOP() {
   const provider = getSelectedProvider();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
-  const proxyUrl = provider.id === 'anthropic' ? getValidatedProxyUrl() : '';
-  if (provider.id === 'anthropic' && proxyUrl === null) { return; }
+  const proxyResult = provider.id === 'anthropic' ? getValidatedProxyUrl() : { value: '', isValid: true };
+  if (provider.id === 'anthropic' && !proxyResult.isValid) { return; }
+  const proxyUrl = proxyResult.value;
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);

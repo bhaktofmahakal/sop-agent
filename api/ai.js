@@ -4,8 +4,30 @@ const ALLOWED_HOSTS = new Set([
   'api.anthropic.com'
 ]);
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+const ALLOWED_FORWARD_HEADERS = new Set([
+  'authorization',
+  'content-type',
+  'x-api-key',
+  'anthropic-version'
+]);
+
+function getAllowedOrigin(req) {
+  const origin = req.headers.origin;
+  const host = req.headers.host;
+  if (!origin || !host) return '';
+  try {
+    const originHost = new URL(origin).host;
+    return originHost === host ? origin : '';
+  } catch {
+    return '';
+  }
+}
+
+function setCors(res, origin) {
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -13,8 +35,23 @@ function setCors(res) {
   );
 }
 
+function filterForwardHeaders(headers = {}) {
+  const filtered = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (ALLOWED_FORWARD_HEADERS.has(key.toLowerCase())) {
+      filtered[key] = value;
+    }
+  }
+  return filtered;
+}
+
 module.exports = async function handler(req, res) {
-  setCors(res);
+  const allowedOrigin = getAllowedOrigin(req);
+  if (req.headers.origin && !allowedOrigin) {
+    res.status(403).json({ error: 'Origin not allowed.' });
+    return;
+  }
+  setCors(res, allowedOrigin);
 
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -64,7 +101,7 @@ module.exports = async function handler(req, res) {
   try {
     const upstreamRes = await fetch(request.url, {
       ...request.options,
-      headers: request.options.headers || {}
+      headers: filterForwardHeaders(request.options.headers)
     });
     const text = await upstreamRes.text();
     const contentType = upstreamRes.headers.get('content-type');
