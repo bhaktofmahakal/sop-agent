@@ -1163,9 +1163,10 @@
         class="api-key-input"
         type="url"
         autocomplete="off"
+        aria-label="Claude proxy URL"
         placeholder="https://your-proxy.example.com/claude"
       >
-      <div class="api-key-note" id="proxy-note">Use an n8n webhook or server proxy that forwards to Anthropic and enables CORS.</div>
+      <div class="api-key-note" id="proxy-note">Use an n8n webhook or server proxy that forwards to https://api.anthropic.com/v1/messages and enables CORS.</div>
     </div>
     <div class="samples-row">
       <span class="samples-label">load sample →</span>
@@ -1442,6 +1443,12 @@ function extractJsonPayload(text) {
 function getSelectedProvider() {
   const providerId = document.getElementById('provider-select').value;
   return PROVIDERS[providerId] || PROVIDERS.groq;
+}
+
+function getProxyUrl(provider) {
+  if (!provider || provider.id !== 'anthropic') return '';
+  const proxyInput = document.getElementById('proxy-url');
+  return proxyInput ? proxyInput.value.trim() : '';
 }
 
 function updateProviderUI() {
@@ -1941,9 +1948,7 @@ async function processSOP() {
   const sop = document.getElementById('sop-input').value.trim();
   const apiKey = document.getElementById('api-key').value.trim();
   const provider = getSelectedProvider();
-  const proxyUrl = provider.id === 'anthropic'
-    ? document.getElementById('proxy-url').value.trim()
-    : '';
+  const proxyUrl = getProxyUrl(provider);
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
   if (provider.id === 'anthropic' && !proxyUrl) {
