@@ -1327,7 +1327,7 @@ const PROVIDERS = {
     placeholder: 'Enter Groq API key (free at console.groq.com)',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     model: 'llama-3.3-70b-versatile',
-    buildRequest(prompt, apiKey, _proxyUrl) {
+    buildRequest(prompt, apiKey, _options = {}) {
       return {
         url: this.endpoint,
         options: {
@@ -1359,7 +1359,8 @@ const PROVIDERS = {
     proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
-    buildRequest(prompt, apiKey, proxyUrl) {
+    buildRequest(prompt, apiKey, options = {}) {
+      const { proxyUrl } = options;
       return {
         url: proxyUrl,
         options: {
@@ -1393,7 +1394,7 @@ const PROVIDERS = {
     placeholder: 'Enter OpenAI API key',
     endpoint: 'https://api.openai.com/v1/chat/completions',
     model: 'gpt-4o-mini',
-    buildRequest(prompt, apiKey, _proxyUrl) {
+    buildRequest(prompt, apiKey, _options = {}) {
       return {
         url: this.endpoint,
         options: {
@@ -1451,6 +1452,15 @@ function getSelectedProvider() {
 function getProxyUrl() {
   const proxyInput = document.getElementById('proxy-url');
   return proxyInput ? proxyInput.value.trim() : '';
+}
+
+function isValidProxyUrl(proxyUrl) {
+  try {
+    const parsed = new URL(proxyUrl);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 function updateProviderUI() {
@@ -1957,6 +1967,10 @@ async function processSOP() {
     showError('Claude requires a CORS-enabled proxy URL. Add your n8n webhook or server proxy URL to continue.');
     return;
   }
+  if (provider.id === 'anthropic' && !isValidProxyUrl(proxyUrl)) {
+    showError('Please enter a valid http(s) proxy URL for Claude.');
+    return;
+  }
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);
@@ -2015,7 +2029,7 @@ Requirements:
   const prompt = buildTrainingPrompt(sop);
 
   try {
-    const request = provider.buildRequest(prompt, apiKey, proxyUrl);
+    const request = provider.buildRequest(prompt, apiKey, { proxyUrl });
     const res = await fetch(request.url, request.options);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -2035,7 +2049,7 @@ Fix it and return valid JSON only with:
 
 JSON to fix:
 ${JSON.stringify(parsed)}`;
-      const repairRequest = provider.buildRequest(repairPrompt, apiKey, proxyUrl);
+      const repairRequest = provider.buildRequest(repairPrompt, apiKey, { proxyUrl });
       const repairRes = await fetch(repairRequest.url, repairRequest.options);
       const repairData = await repairRes.json();
       if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
