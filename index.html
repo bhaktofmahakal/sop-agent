@@ -1168,6 +1168,7 @@
         type="url"
         autocomplete="off"
         aria-label="Claude proxy URL"
+        aria-describedby="proxy-note"
       >
       <div class="api-key-note" id="proxy-note"></div>
     </div>
@@ -1462,6 +1463,19 @@ function isValidProxyUrl(proxyUrl) {
   } catch {
     return false;
   }
+}
+
+function requireValidProxyUrl() {
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) {
+    showError('Claude requires a CORS-enabled proxy URL. Add your n8n webhook or server proxy URL to continue.');
+    return '';
+  }
+  if (!isValidProxyUrl(proxyUrl)) {
+    showError('Please enter a valid https proxy URL for Claude.');
+    return '';
+  }
+  return proxyUrl;
 }
 
 function updateProviderUI() {
@@ -1961,17 +1975,10 @@ async function processSOP() {
   const sop = document.getElementById('sop-input').value.trim();
   const apiKey = document.getElementById('api-key').value.trim();
   const provider = getSelectedProvider();
-  const proxyUrl = getProxyUrl();
   if (!sop || sop.length < 40) { showError('Please paste a valid SOP document first.'); return; }
   if (!apiKey) { showError(`Please enter your ${provider.label} API key first.`); return; }
-  if (provider.id === 'anthropic' && !proxyUrl) {
-    showError('Claude requires a CORS-enabled proxy URL. Add your n8n webhook or server proxy URL to continue.');
-    return;
-  }
-  if (provider.id === 'anthropic' && !isValidProxyUrl(proxyUrl)) {
-    showError('Please enter a valid https proxy URL for Claude.');
-    return;
-  }
+  const proxyUrl = provider.id === 'anthropic' ? requireValidProxyUrl() : '';
+  if (provider.id === 'anthropic' && !proxyUrl) { return; }
 
   document.getElementById('error-box').classList.remove('visible');
   setLoading(`Sending SOP to ${provider.label} API...`);
