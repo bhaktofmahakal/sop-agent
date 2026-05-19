@@ -1465,8 +1465,8 @@ function updateProviderUI() {
   loaderMsg.textContent = `Sending SOP to ${provider.label} API...`;
   if (provider.id === 'anthropic') {
     proxyWrap.style.display = 'flex';
-    proxyInput.placeholder = provider.proxyPlaceholder || proxyInput.placeholder;
-    proxyNote.textContent = provider.proxyNote || proxyNote.textContent;
+    proxyInput.placeholder = provider.proxyPlaceholder || 'https://your-proxy.example.com/claude';
+    proxyNote.textContent = provider.proxyNote || 'Use an n8n webhook or server proxy that forwards to https://api.anthropic.com/v1/messages and enables CORS.';
   } else {
     proxyWrap.style.display = 'none';
   }
