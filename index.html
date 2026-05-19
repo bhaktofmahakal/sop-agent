@@ -245,6 +245,10 @@
   }
   .proxy-wrap {
     margin-top: 12px;
+    display: none;
+  }
+  .proxy-wrap.is-visible {
+    display: flex;
   }
   .provider-row {
     display: grid;
@@ -1156,7 +1160,7 @@
         <div class="api-key-note" id="api-key-note">Get free API key at console.groq.com</div>
       </div>
     </div>
-    <div class="api-key-wrap proxy-wrap" id="proxy-wrap" style="display: none;">
+    <div class="api-key-wrap proxy-wrap" id="proxy-wrap">
       <div class="provider-label">Claude Proxy URL</div>
       <input
         id="proxy-url"
@@ -1356,9 +1360,9 @@ const PROVIDERS = {
     proxyPlaceholder: 'https://your-proxy.example.com/claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     model: 'claude-sonnet-4-20250514',
-    buildRequest(prompt, apiKey, endpointOverride) {
+    buildRequest(prompt, apiKey, proxyUrl) {
       return {
-        url: endpointOverride || this.endpoint,
+        url: proxyUrl || this.endpoint,
         options: {
           method: 'POST',
           headers: {
@@ -1451,6 +1455,13 @@ function getProxyUrl(provider) {
   return proxyInput ? proxyInput.value.trim() : '';
 }
 
+function buildProviderRequest(provider, prompt, apiKey, proxyUrl) {
+  if (provider.id === 'anthropic') {
+    return provider.buildRequest(prompt, apiKey, proxyUrl);
+  }
+  return provider.buildRequest(prompt, apiKey);
+}
+
 function updateProviderUI() {
   const provider = getSelectedProvider();
   const apiKeyInput = document.getElementById('api-key');
@@ -1464,11 +1475,11 @@ function updateProviderUI() {
   apiKeyNote.textContent = provider.note;
   loaderMsg.textContent = `Sending SOP to ${provider.label} API...`;
   if (provider.id === 'anthropic') {
-    proxyWrap.style.display = 'flex';
+    proxyWrap.classList.add('is-visible');
     proxyInput.placeholder = provider.proxyPlaceholder || 'https://your-proxy.example.com/claude';
     proxyNote.textContent = provider.proxyNote || 'Use an n8n webhook or server proxy that forwards to https://api.anthropic.com/v1/messages and enables CORS.';
   } else {
-    proxyWrap.style.display = 'none';
+    proxyWrap.classList.remove('is-visible');
   }
 }
 
@@ -2013,9 +2024,7 @@ Requirements:
   const prompt = buildTrainingPrompt(sop);
 
   try {
-    const request = provider.id === 'anthropic'
-      ? provider.buildRequest(prompt, apiKey, proxyUrl)
-      : provider.buildRequest(prompt, apiKey);
+    const request = buildProviderRequest(provider, prompt, apiKey, proxyUrl);
     const res = await fetch(request.url, request.options);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -2035,9 +2044,7 @@ Fix it and return valid JSON only with:
 
 JSON to fix:
 ${JSON.stringify(parsed)}`;
-      const repairRequest = provider.id === 'anthropic'
-        ? provider.buildRequest(repairPrompt, apiKey, proxyUrl)
-        : provider.buildRequest(repairPrompt, apiKey);
+      const repairRequest = buildProviderRequest(provider, repairPrompt, apiKey, proxyUrl);
       const repairRes = await fetch(repairRequest.url, repairRequest.options);
       const repairData = await repairRes.json();
       if (!repairRes.ok) throw new Error(repairData.error?.message || `HTTP ${repairRes.status}`);
